@@ -1,1 +1,1 @@
-# mvn
+# Visualizing the Bivariate Normal Distribution
