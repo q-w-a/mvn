@@ -21,6 +21,7 @@ ui <- fluidPage(
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
+     
         sidebarPanel(
           numericInput("mu_x",
                        label = "$$\\mu_X$$",
@@ -62,9 +63,28 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
+  
+  output$ui <- renderUI( {
+    # tagList(
+    sliderInput("cov_xy", label = withMathJax("$$\\text{Cov}(X,Y)$$"),
+                value = 0, 
+                min = -1*round(sqrt(input$var_x * input$var_y ),2), 
+                max = 1*round(sqrt(input$var_x * input$var_y),2), step = .5)
+    #)
+  })
+  
+  
+  
+  
   plt_list <- reactive(
                        {
                          input$goButton
+
+                         validate(
+                           need(!is.null(input$cov_xy), "") 
+                         )
+                         
+                         
                          isolate( { 
 
     sim <- MASS::mvrnorm(n = 10000, mu =c(input$mu_x,input$mu_y),
@@ -96,8 +116,12 @@ server <- function(input, output) {
 
     
     output$dist <- renderUI({
+      
+      validate(
+        need(!is.null(input$cov_xy), "Loading") 
+      )
+      
       input$goButton
-      input$cov_xy
       isolate (  { 
      withMathJax( paste0("$$N_2\\left(\\begin{pmatrix}", input$mu_x, "\\\\", input$mu_y, 
               "\\end{pmatrix}, \\begin{pmatrix}", input$var_x, "&", input$cov_xy,
@@ -105,18 +129,10 @@ server <- function(input, output) {
              "\\end{pmatrix}", "\\right)", "$$")) } )  }) 
     
     
-    output$ui <- renderUI( {
-     # tagList(
-        sliderInput("cov_xy", label = "$$\\text{Cov}(X,Y)$$",
-                     value = 0, 
-                     min = -1*sqrt(input$var_x * input$var_y ), 
-                     max = 1*sqrt(input$var_x * input$var_y), step = .5)
-      #)
-    })
     
     
-    
-    output$distPlot <- renderPlot({ plt_list()[["plot1"]] })
+    output$distPlot <- renderPlot(
+      { plt_list()[["plot1"]] })
     output$contoursPlot <- renderPlot({plt_list()[["plot2"]]})
     
       
